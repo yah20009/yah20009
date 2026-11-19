@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d7a58">
+<meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+<title>سلة التوفير</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow column like a till receipt; sticky tab bar; tables scroll sideways on their own */
+:root{
+  --bg:#f3f6f2; --surface:#ffffff; --ink:#15302a; --muted:#5f716b; --line:#dbe3dd;
+  --accent:#0d7a58; --accent-ink:#ffffff; --accent-soft:#e1f1ea;
+  --best:#b8780a; --best-soft:#fbf0d7; --danger:#b3362b;
+  --f-body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+  --f-head:"Readex Pro","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1714; --surface:#17221e; --ink:#e4eee9; --muted:#93a7a0; --line:#2a3a34;
+  --accent:#3fbf8f; --accent-ink:#06231a; --accent-soft:#183a2e;
+  --best:#f0b545; --best-soft:#3a2d12; --danger:#f07a6e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1714; --surface:#17221e; --ink:#e4eee9; --muted:#93a7a0; --line:#2a3a34;
+  --accent:#3fbf8f; --accent-ink:#06231a; --accent-soft:#183a2e;
+  --best:#f0b545; --best-soft:#3a2d12; --danger:#f07a6e; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;direction:rtl}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 48px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0}
+h1{font-size:1.6rem}
+h2{font-size:1.15rem}
+h3{font-size:1rem}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.9rem}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;padding-block:8px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+nav.tabs button{flex:1;font:600 .95rem var(--f-body);padding:10px 6px;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+button,input,select{font-family:var(--f-body);font-size:1rem}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.btn.small{padding:4px 10px;font-size:.85rem}
+.btn.danger{color:var(--danger)}
+section[hidden]{display:none}
+.stack{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.addrow{display:flex;gap:8px;flex-wrap:wrap}
+.addrow input[type=text]{flex:1 1 180px;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.addrow input[type=number]{width:72px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-align:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:3px 12px;font-size:.88rem;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.note{font-size:.85rem;color:var(--muted)}
+.banner{background:var(--best-soft);border:1px dashed var(--best);border-radius:10px;padding:8px 12px;font-size:.9rem;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.item>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px}
+.item>summary::-webkit-details-marker{display:none}
+.item .name{flex:1;min-width:0;font-weight:600}
+.item .qty{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+.pill{font-size:.8rem;border-radius:999px;padding:2px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill.best{background:var(--best-soft);color:var(--best);font-weight:700}
+.pill.none{background:var(--bg);color:var(--muted)}
+.item .body{border-top:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.prices{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.price{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--bg)}
+.price.is-best{border-color:var(--best);background:var(--best-soft)}
+.price label{flex:1;min-width:0;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.price input{width:76px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-align:center;font-variant-numeric:tabular-nums}
+.price a{font-size:.8rem;color:var(--accent);text-decoration:none;font-weight:600;white-space:nowrap}
+.itemtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper button{border:0;background:transparent;color:var(--ink);width:34px;height:32px;cursor:pointer;font-size:1.1rem}
+.stepper span{min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+.empty{text-align:center;color:var(--muted);padding:28px 12px;border:1px dashed var(--line);border-radius:var(--r)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.kpi .lbl{font-size:.82rem;color:var(--muted)}
+.kpi .val{font-family:var(--f-head);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.kpi .who{font-size:.9rem;font-weight:600}
+.kpi.win{border-color:var(--best);background:var(--best-soft)}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.9rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th:first-child,td:first-child{text-align:right;position:sticky;right:0;background:var(--surface)}
+thead th{font-weight:600;color:var(--muted);font-size:.82rem}
+td.best{background:var(--best-soft);color:var(--best);font-weight:700}
+tfoot td{font-weight:700}
+.plan{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.plan .panel h3{display:flex;justify-content:space-between;gap:8px}
+.plan ul{margin:6px 0 0;padding:0 18px 0 0}
+.search{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.stores{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.store{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:6px}
+.store .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.store p{margin:0;font-size:.85rem;color:var(--muted)}
+.store a{color:var(--accent);font-weight:600;text-decoration:none;font-size:.9rem}
+.tag{font-size:.75rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;white-space:nowrap}
+.cat-h{margin-top:8px;display:flex;align-items:baseline;gap:8px}
+.cat-h .note{font-weight:400}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:10px;font-size:.9rem;z-index:20}
+textarea.share{width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);padding:8px;font-family:var(--f-body)}
+@media (prefers-reduced-motion:no-preference){.item,.kpi{transition:border-color .2s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>سلة التوفير</h1>
+      <p class="sub">اكتب مقاضيك، وسجّل السعر من كل متجر، ويطلع لك أرخص مكان لكل غرض.</p>
+    </div>
+    <button class="btn ghost small" id="themeBtn" type="button">تبديل المظهر</button>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="t-list" aria-selected="true" data-tab="list">قائمتي</button>
+    <button role="tab" id="t-compare" aria-selected="false" data-tab="compare">المقارنة</button>
+    <button role="tab" id="t-stores" aria-selected="false" data-tab="stores">المتاجر والعروض</button>
+  </nav>
+
+  <!-- القائمة -->
+  <section id="list" class="stack">
+    <form class="panel stack" id="addForm">
+      <div class="addrow">
+        <input type="text" id="newName" placeholder="مثال: حليب المراعي ٢ لتر" autocomplete="off" aria-label="اسم الغرض">
+        <input type="number" id="newQty" value="1" min="1" aria-label="الكمية">
+        <button class="btn primary" type="submit">أضف</button>
+      </div>
+      <div class="chips" id="quick"></div>
+    </form>
+    <div id="sampleBanner" class="banner" hidden>
+      <span>هذي قائمة وأسعار تجريبية عشان تشوف الفكرة، مو أسعار حقيقية.</span>
+      <button class="btn small" type="button" id="clearSample">امسحها وابدأ قائمتي</button>
+    </div>
+    <p class="note">افتح أي غرض، اضغط «ابحث» عند المتجر عشان تشوف سعره، وبعدها اكتبه بالخانة. أرخص سعر يتلوّن تلقائياً.</p>
+    <div id="items" class="stack"></div>
+  </section>
+
+  <!-- المقارنة -->
+  <section id="compare" class="stack" hidden>
+    <div class="kpis" id="kpis"></div>
+    <h2>جدول الأسعار</h2>
+    <div class="scroll"><table id="table"></table></div>
+    <p class="note">الأسعار في الجدول مضروبة في الكمية. الخانة الملوّنة هي الأرخص للغرض.</p>
+    <h2>خطة الشراء الأوفر</h2>
+    <div class="plan" id="plan"></div>
+    <div class="panel stack">
+      <h3>انسخ القائمة وأرسلها بالواتساب</h3>
+      <textarea class="share" id="shareText" readonly aria-label="نص القائمة"></textarea>
+      <div><button class="btn primary small" type="button" id="copyBtn">نسخ النص</button></div>
+    </div>
+  </section>
+
+  <!-- المتاجر -->
+  <section id="stores" class="stack" hidden>
+    <input class="search" id="storeSearch" type="search" placeholder="ابحث عن متجر… (بنده، نون، النهدي)">
+    <p class="note">فعّل «في المقارنة» للمتاجر اللي تبي تقارن أسعارها في قائمتك. الروابط تفتح موقع المتجر أو مجلة العروض.</p>
+    <div id="storeList" class="stack"></div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// ---------- بيانات المتاجر ----------
+const G = (domain) => (q) => "https://www.google.com/search?q=" + encodeURIComponent(q + " site:" + domain);
+const CATS = {
+  online:{t:"أمازون ونون والتسوق الشامل", d:"أكبر منصتين للمقارنة"},
+  super:{t:"السوبرماركت والهايبرماركت", d:"عروض أسبوعية وتوصيل"},
+  quick:{t:"التوصيل السريع", d:"مقاضي خلال دقائق في الرياض"},
+  pharmacy:{t:"الصيدليات والعناية", d:"عروض ١+١ والفيتامينات"},
+  electronics:{t:"الإلكترونيات والمنزل", d:"أجهزة وأثاث ومطبخ"},
+  flyers:{t:"مجلات العروض", d:"كل التخفيضات في مكان واحد"},
+  coupons:{t:"كوبونات وكاش باك", d:"كود خصم قبل الدفع"}
+};
+const STORES = [
+  {id:"amazon",n:"أمازون السعودية",c:"online",u:"https://www.amazon.sa",s:q=>"https://www.amazon.sa/s?k="+encodeURIComponent(q)+"&language=ar_AE",p:"توصيل سريع وأمازون الآن للمقاضي"},
+  {id:"noon",n:"نون",c:"online",u:"https://www.noon.com/saudi-ar/",s:q=>"https://www.noon.com/saudi-ar/search/?q="+encodeURIComponent(q),p:"نون مينتس للتوصيل خلال دقائق"},
+  {id:"panda",n:"بنده",c:"super",u:"https://panda.sa",s:G("panda.sa"),p:"بنده وهايبر بنده، عروض أسبوعية"},
+  {id:"othaim",n:"العثيم",c:"super",u:"https://www.othaimmarkets.com",s:G("othaimmarkets.com"),p:"برنامج اكتساب للولاء"},
+  {id:"danube",n:"الدانوب",c:"super",u:"https://www.danube.sa",s:G("danube.sa"),p:"قوي في الرياض، مستورد ومخبوزات"},
+  {id:"tamimi",n:"التميمي",c:"super",u:"https://shop.tamimimarkets.com",s:G("tamimimarkets.com"),p:"برنامج ثماري وعروض التطبيق"},
+  {id:"carrefour",n:"كارفور",c:"super",u:"https://www.carrefourksa.com",s:q=>"https://www.carrefourksa.com/mafsau/ar/search?keyword="+encodeURIComponent(q),p:"نقاط SHARE، مقاضي وأجهزة"},
+  {id:"lulu",n:"لولو",c:"super",u:"https://www.luluhypermarket.com/ar-sa",s:G("luluhypermarket.com"),p:"عروض غذائية وإلكترونيات"},
+  {id:"sadhan",n:"السدحان",c:"super",u:"https://www.google.com/search?q=%D8%B9%D8%B1%D9%88%D8%B6+%D8%A7%D9%84%D8%B3%D8%AF%D8%AD%D8%A7%D9%86",s:q=>"https://www.google.com/search?q="+encodeURIComponent(q+" السدحان سعر"),p:"عروض أسبوعية في الرياض"},
+  {id:"manuel",n:"مانويل",c:"super",u:"https://www.manuelmarket.com",s:G("manuelmarket.com"),p:"منتجات مستوردة"},
+  {id:"nesto",n:"نستو",c:"super",u:"https://www.nestogroup.com",s:q=>"https://www.google.com/search?q="+encodeURIComponent(q+" نستو سعر"),p:"عروض أسبوعية مستمرة"},
+  {id:"ninja",n:"نينجا",c:"quick",u:"https://ananinja.com",s:G("ananinja.com"),p:"توصيل خلال دقائق"},
+  {id:"nana",n:"نعناع",c:"quick",u:"https://www.nana.sa",s:G("nana.sa"),p:"نعناع إكسبريس والسوبرماركت"},
+  {id:"hunger",n:"هنقرستيشن ماركت",c:"quick",u:"https://hungerstation.com/sa-ar",s:G("hungerstation.com"),p:"مقاضي من السوبرماركت القريب"},
+  {id:"jahez",n:"جاهز",c:"quick",u:"https://www.jahez.net",s:null,p:"بقالة وطلبات يومية"},
+  {id:"toyou",n:"تويو",c:"quick",u:"https://toyou.io",s:null,p:"توصيل من أي متجر"},
+  {id:"keeta",n:"كيتا",c:"quick",u:"https://www.keeta.com",s:null,p:"طلبات وبقالة"},
+  {id:"nahdi",n:"النهدي",c:"pharmacy",u:"https://www.nahdionline.com/ar-sa",s:G("nahdionline.com"),p:"عروض ١+١ ونقاط نهدي"},
+  {id:"dawaa",n:"الدواء",c:"pharmacy",u:"https://www.al-dawaa.com",s:G("al-dawaa.com"),p:"حليب أطفال وفيتامينات"},
+  {id:"whites",n:"وايتس",c:"pharmacy",u:"https://www.whites.net",s:G("whites.net"),p:"تجميل وعناية"},
+  {id:"jarir",n:"جرير",c:"electronics",u:"https://www.jarir.com/sa-ar/",s:G("jarir.com"),p:"إلكترونيات وأجهزة ذكية"},
+  {id:"extra",n:"إكسترا",c:"electronics",u:"https://www.extra.com/ar-sa/",s:q=>"https://www.extra.com/ar-sa/search/?text="+encodeURIComponent(q),p:"أجهزة منزلية بضمان محلي"},
+  {id:"saco",n:"ساكو",c:"electronics",u:"https://www.saco.sa",s:G("saco.sa"),p:"أدوات منزلية وعدد"},
+  {id:"ikea",n:"ايكيا",c:"electronics",u:"https://www.ikea.com/sa/ar/",s:q=>"https://www.ikea.com/sa/ar/search/?q="+encodeURIComponent(q),p:"أثاث ومستلزمات البيت"},
+  {id:"abyat",n:"أبيات",c:"electronics",u:"https://www.abyat.com",s:G("abyat.com"),p:"منزل وحديقة"},
+  {id:"homecentre",n:"هوم سنتر",c:"electronics",u:"https://www.homecentre.com/sa/ar/",s:G("homecentre.com"),p:"أثاث وديكور"},
+  {id:"almanea",n:"المنيع",c:"electronics",u:"https://www.almanea.sa",s:G("almanea.sa"),p:"أجهزة كهربائية"},
+  {id:"swsg",n:"الشتاء والصيف",c:"electronics",u:"https://www.swsg.co",s:G("swsg.co"),p:"مكيفات وأجهزة"},
+  {id:"qasr",n:"قصر الأواني",c:"electronics",u:"https://www.google.com/search?q=%D9%82%D8%B5%D8%B1+%D8%A7%D9%84%D8%A3%D9%88%D8%A7%D9%86%D9%8A",s:null,p:"مستلزمات المطبخ"},
+  {id:"d4d",n:"دي 4 دي",c:"flyers",u:"https://d4donline.com/ar/saudi-arabia/riyadh/offers",s:null,p:"مجلات الهايبرماركت محدثة يومياً"},
+  {id:"clicflyer",n:"كليك فلاير",c:"flyers",u:"https://www.clicflyer.com",s:null,p:"نشرات تفاعلية وقائمة ذكية"},
+  {id:"ksaoffers",n:"عروض السعودية",c:"flyers",u:"https://www.google.com/search?q=%D8%B9%D8%B1%D9%88%D8%B6+%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9+%D9%85%D8%AC%D9%84%D8%A7%D8%AA",s:null,p:"كتالوجات أسبوعية وموسمية"},
+  {id:"qooty",n:"قوتي",c:"flyers",u:"https://www.google.com/search?q=%D8%AA%D8%B7%D8%A8%D9%8A%D9%82+%D9%82%D9%88%D8%AA%D9%8A",s:null,p:"مقارنة سريعة للسلع الأساسية"},
+  {id:"mowafir",n:"الموفر",c:"coupons",u:"https://almowafir.com",s:null,p:"أكواد خصم محدثة"},
+  {id:"alcoupon",n:"الكوبون",c:"coupons",u:"https://alcoupon.com/ar",s:null,p:"كوبونات المتاجر والتوصيل"},
+  {id:"arkhas",n:"أرخص",c:"coupons",u:"https://www.google.com/search?q=%D8%A3%D8%B1%D8%AE%D8%B5+%D9%83%D8%A7%D8%B4+%D8%A8%D8%A7%D9%83",s:null,p:"كاش باك واسترداد نقدي"}
+];
+const BY = Object.fromEntries(STORES.map(s=>[s.id,s]));
+const QUICK = ["حليب","رز بسمتي","زيت","بيض ٣٠","سكر","دجاج","خبز","ماء","شاي","مناديل","تونة","جبن"];
+const DEFAULT_COMPARE = ["amazon","noon","panda","othaim","danube","carrefour","tamimi","lulu"];
+
+// ---------- الحالة ----------
+const KEY="salla-tawfeer-v1";
+const uid=()=>Math.random().toString(36).slice(2,9);
+function sampleState(){
+  const it=(name,qty,prices)=>({id:uid(),name,qty,prices});
+  return {sample:true,compare:[...DEFAULT_COMPARE],items:[
+    it("حليب المراعي ٢ لتر",2,{amazon:12.5,noon:12.25,panda:11.95,othaim:11.5,danube:12.75,carrefour:11.95}),
+    it("رز بسمتي ٥ كيلو",1,{amazon:46,noon:44.9,panda:42.95,othaim:43.5,carrefour:41.75,tamimi:47}),
+    it("زيت دوار الشمس ١.٥ لتر",1,{amazon:21,noon:19.95,panda:18.5,othaim:18.95,carrefour:19.25}),
+    it("بيض ٣٠ حبة",1,{panda:22.95,othaim:21.5,danube:24,carrefour:22.5,amazon:23.5})
+  ]};
+}
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){state=null}
+if(!state||!Array.isArray(state.items)) state=sampleState();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+
+const $=s=>document.querySelector(s);
+const fmt=n=>n.toLocaleString("ar-SA",{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,1800)}
+function searchUrl(store,q){return store.s?store.s(q):store.u}
+
+// ---------- الحسابات ----------
+function bestOf(item){
+  let best=null;
+  for(const id of state.compare){const p=item.prices[id];if(p>0&&(best===null||p<best.p))best={id,p}}
+  return best;
+}
+function analyse(){
+  const items=state.items;
+  const totals={},cover={};
+  for(const id of state.compare){totals[id]=0;cover[id]=0}
+  let split=0,splitCount=0;const plan={};
+  for(const it of items){
+    for(const id of state.compare){const p=it.prices[id];if(p>0){totals[id]+=p*it.qty;cover[id]++}}
+    const b=bestOf(it);
+    if(b){split+=b.p*it.qty;splitCount++;(plan[b.id]=plan[b.id]||[]).push({it,p:b.p})}
+  }
+  const full=state.compare.filter(id=>items.length&&cover[id]===items.length);
+  let single=null;
+  for(const id of full) if(single===null||totals[id]<totals[single]) single=id;
+  let priciest=null;
+  for(const id of full) if(priciest===null||totals[id]>totals[priciest]) priciest=id;
+  return {totals,cover,split,splitCount,plan,single,priciest};
+}
+
+// ---------- الرسم ----------
+function renderQuick(){
+  $("#quick").innerHTML=QUICK.map(q=>`<button type="button" class="chip" data-q="${esc(q)}">+ ${esc(q)}</button>`).join("");
+}
+function renderItems(){
+  $("#sampleBanner").hidden=!state.sample;
+  const box=$("#items");
+  if(!state.items.length){box.innerHTML=`<div class="empty">قائمتك فاضية. اكتب أول غرض فوق أو اختر من الاقتراحات.</div>`;return}
+  const open=new Set([...box.querySelectorAll("details[open]")].map(d=>d.dataset.id));
+  box.innerHTML=state.items.map(it=>{
+    const b=bestOf(it);
+    const pill=b?`<span class="pill best">الأرخص: ${esc(BY[b.id].n)} · ${fmt(b.p)} ر.س</span>`:`<span class="pill none">ما فيه أسعار</span>`;
+    const prices=state.compare.map(id=>{const s=BY[id];const v=it.prices[id]??"";
+      return `<div class="price ${b&&b.id===id?"is-best":""}">
+        <label for="p-${it.id}-${id}">${esc(s.n)}</label>
+        <input id="p-${it.id}-${id}" type="number" inputmode="decimal" step="0.01" min="0" placeholder="ر.س" value="${v}" data-item="${it.id}" data-store="${id}">
+        <a href="${esc(searchUrl(s,it.name))}" target="_blank" rel="noopener">ابحث</a></div>`}).join("");
+    return `<details class="item" data-id="${it.id}" ${open.has(it.id)?"open":""}>
+      <summary><span class="name">${esc(it.name)}</span><span class="qty">×${it.qty}</span>${pill}</summary>
+      <div class="body">
+        <div class="prices">${prices}</div>
+        <div class="itemtools">
+          <span class="note">الكمية</span>
+          <span class="stepper"><button type="button" data-step="1" data-item="${it.id}" aria-label="زيادة">+</button><span>${it.qty}</span><button type="button" data-step="-1" data-item="${it.id}" aria-label="نقص">−</button></span>
+          <button class="btn small danger" type="button" data-del="${it.id}">حذف</button>
+        </div>
+      </div></details>`}).join("");
+}
+function renderCompare(){
+  const a=analyse(),items=state.items,cmp=state.compare;
+  const k=[];
+  if(a.splitCount){
+    k.push(`<div class="kpi win"><div class="lbl">أرخص توزيع (كل غرض من أرخص متجر)</div><div class="val">${fmt(a.split)} ر.س</div><div class="who">${Object.keys(a.plan).length} متجر</div></div>`);
+  }
+  if(a.single){
+    k.push(`<div class="kpi"><div class="lbl">أرخص متجر لو تشتري الكل من مكان واحد</div><div class="val">${fmt(a.totals[a.single])} ر.س</div><div class="who">${esc(BY[a.single].n)}</div></div>`);
+    if(a.priciest&&a.priciest!==a.single){
+      const save=a.totals[a.priciest]-a.split;
+      k.push(`<div class="kpi"><div class="lbl">توفيرك مقارنة بأغلى متجر (${esc(BY[a.priciest].n)})</div><div class="val">${fmt(save)} ر.س</div><div class="who">${a.totals[a.priciest]?Math.round(save/a.totals[a.priciest]*100):0}٪ أقل</div></div>`);
+    }
+  }else if(items.length){
+    k.push(`<div class="kpi"><div class="lbl">متجر واحد للكل</div><div class="val">—</div><div class="who">ما فيه متجر عنده سعر لكل الأغراض بعد</div></div>`);
+  }
+  $("#kpis").innerHTML=k.join("")||`<div class="empty">أضف أغراض وأسعار في «قائمتي» عشان تطلع المقارنة.</div>`;
+
+  const head=`<thead><tr><th>الغرض</th>${cmp.map(id=>`<th>${esc(BY[id].n)}</th>`).join("")}</tr></thead>`;
+  const rows=items.map(it=>{const b=bestOf(it);
+    return `<tr><td>${esc(it.name)} ×${it.qty}</td>${cmp.map(id=>{const p=it.prices[id];return p>0?`<td class="${b&&b.id===id?"best":""}">${fmt(p*it.qty)}</td>`:`<td class="note">—</td>`}).join("")}</tr>`}).join("");
+  const foot=`<tfoot><tr><td>المجموع (${items.length} أغراض)</td>${cmp.map(id=>`<td class="${a.single===id?"best":""}">${a.cover[id]?fmt(a.totals[id]):"—"}${a.cover[id]&&a.cover[id]<items.length?`<div class="note">${a.cover[id]}/${items.length}</div>`:""}</td>`).join("")}</tr></tfoot>`;
+  $("#table").innerHTML=head+`<tbody>${rows}</tbody>`+foot;
+
+  const plan=Object.entries(a.plan).sort((x,y)=>y[1].length-x[1].length);
+  $("#plan").innerHTML=plan.map(([id,list])=>{const sum=list.reduce((t,x)=>t+x.p*x.it.qty,0);
+    return `<div class="panel"><h3><span>${esc(BY[id].n)}</span><span>${fmt(sum)} ر.س</span></h3>
+      <ul>${list.map(x=>`<li>${esc(x.it.name)} ×${x.it.qty} — ${fmt(x.p*x.it.qty)}</li>`).join("")}</ul>
+      <a class="note" href="${esc(BY[id].u)}" target="_blank" rel="noopener">افتح ${esc(BY[id].n)}</a></div>`}).join("")||`<div class="empty">لما تسجّل أسعار، تطلع هنا قائمة لكل متجر بالأغراض اللي أرخص فيه.</div>`;
+
+  const noPrice=items.filter(it=>!bestOf(it));
+  let txt="🛒 قائمة المقاضي (سلة التوفير)\n";
+  for(const [id,list] of plan){txt+=`\n📍 ${BY[id].n}:\n`+list.map(x=>`- ${x.it.name} ×${x.it.qty} (${x.p} ر.س)`).join("\n")+"\n"}
+  if(noPrice.length) txt+=`\nبدون سعر:\n`+noPrice.map(it=>`- ${it.name} ×${it.qty}`).join("\n")+"\n";
+  if(a.splitCount) txt+=`\nالمجموع المتوقع: ${a.split.toFixed(2)} ر.س`;
+  $("#shareText").value=txt;
+}
+function renderStores(){
+  const q=$("#storeSearch").value.trim();
+  const html=Object.entries(CATS).map(([c,meta])=>{
+    const list=STORES.filter(s=>s.c===c&&(!q||s.n.includes(q)||s.p.includes(q)||s.id.includes(q.toLowerCase())));
+    if(!list.length)return"";
+    const comparable=!["flyers","coupons"].includes(c);
+    return `<div class="cat-h"><h2>${meta.t}</h2><span class="note">${meta.d}</span></div>
+      <div class="stores">${list.map(s=>`<div class="store">
+        <div class="row"><h3>${esc(s.n)}</h3>${comparable?`<label class="toggle"><input type="checkbox" id="cmp-${s.id}" data-cmp="${s.id}" ${state.compare.includes(s.id)?"checked":""}>في المقارنة</label>`:`<span class="tag">${c==="flyers"?"مجلات":"كوبونات"}</span>`}</div>
+        <p>${esc(s.p)}</p>
+        <a href="${esc(s.u)}" target="_blank" rel="noopener">${c==="flyers"?"شوف العروض":"افتح الموقع"} ←</a></div>`).join("")}</div>`}).join("");
+  $("#storeList").innerHTML=html||`<div class="empty">ما لقينا متجر بهالاسم.</div>`;
+}
+function renderAll(){renderItems();renderCompare();renderStores()}
+
+// ---------- الأحداث ----------
+function leaveSample(){if(state.sample){state.sample=false}}
+$("#addForm").addEventListener("submit",e=>{e.preventDefault();
+  const name=$("#newName").value.trim();if(!name)return;
+  const qty=Math.max(1,parseInt($("#newQty").value)||1);
+  if(state.sample){state.items=[];state.sample=false}
+  state.items.unshift({id:uid(),name,qty,prices:{}});
+  $("#newName").value="";$("#newQty").value=1;save();renderAll();
+  const d=document.querySelector(`details[data-id="${state.items[0].id}"]`);if(d)d.open=true;
+  toast("انضاف «"+name+"»");
+});
+$("#quick").addEventListener("click",e=>{const b=e.target.closest("[data-q]");if(!b)return;$("#newName").value=b.dataset.q;$("#newName").focus()});
+$("#clearSample").addEventListener("click",()=>{state.items=[];state.sample=false;save();renderAll();$("#newName").focus()});
+$("#items").addEventListener("change",e=>{const i=e.target;if(!i.dataset.store)return;
+  const it=state.items.find(x=>x.id===i.dataset.item);const v=parseFloat(i.value);
+  if(v>0)it.prices[i.dataset.store]=v;else delete it.prices[i.dataset.store];
+  leaveSample();save();renderItems();renderCompare();
+});
+$("#items").addEventListener("click",e=>{
+  const st=e.target.closest("[data-step]");
+  if(st){const it=state.items.find(x=>x.id===st.dataset.item);it.qty=Math.max(1,it.qty+ +st.dataset.step);save();renderItems();renderCompare();return}
+  const del=e.target.closest("[data-del]");
+  if(del){state.items=state.items.filter(x=>x.id!==del.dataset.del);save();renderAll();toast("انحذف")}
+});
+$("#storeSearch").addEventListener("input",renderStores);
+$("#storeList").addEventListener("change",e=>{const id=e.target.dataset.cmp;if(!id)return;
+  if(e.target.checked){if(!state.compare.includes(id))state.compare.push(id)}else state.compare=state.compare.filter(x=>x!==id);
+  save();renderItems();renderCompare();toast(e.target.checked?"انضاف للمقارنة":"انشال من المقارنة");
+});
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>show(b.dataset.tab)));
+function show(tab){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
+  ["list","compare","stores"].forEach(t=>$("#"+t).hidden=t!==tab);
+  if(tab==="compare")renderCompare();
+  if(location.hash!=="#"+tab)history.replaceState(null,"","#"+tab);
+}
+window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["list","compare","stores"].includes(h))show(h)});
+$("#copyBtn").addEventListener("click",()=>{const t=$("#shareText");
+  if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(()=>toast("انتسخ"),()=>{t.select();toast("حدد النص وانسخه")});else{t.select();toast("حدد النص وانسخه")}
+});
+$("#themeBtn").addEventListener("click",()=>{const r=document.documentElement;
+  const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme=dark?"light":"dark";try{localStorage.setItem(KEY+"-theme",r.dataset.theme)}catch(e){}
+});
+try{const t=localStorage.getItem(KEY+"-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}
+
+renderQuick();renderAll();
+const h=location.hash.slice(1);show(["list","compare","stores"].includes(h)?h:"list");
+</script>
+
+</body>
+</html>
