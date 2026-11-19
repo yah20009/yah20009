@@ -359,7 +359,7 @@ function renderItems(){
   $("#sampleBanner").hidden=!state.sample;
   const box=$("#items");
   if(!state.items.length){box.innerHTML=`<div class="empty">قائمتك فاضية. اكتب أول غرض فوق أو اختر من الاقتراحات.</div>`;return}
-  const open=new Set([...box.querySelectorAll("details[open]")].map(d=>d.dataset.id));
+  openIds=new Set([...box.querySelectorAll("details[open]")].map(d=>d.dataset.id));
   const groups=[];const gmap={};
   for(const it of state.items){const g=it.group||"";if(!gmap[g]){gmap[g]=[];groups.push(g)}gmap[g].push(it)}
   const sel=$("#newGroup");const cur=sel.value;
@@ -371,6 +371,7 @@ function renderItems(){
     return `<div class="group-h"><h2>${esc(g||"أغراض أخرى")}</h2><span class="note">${list.length} غرض${priced?` · أرخص مجموع ${fmt(sum)} ر.س`:""}</span></div>`+list.map(renderItem).join("");
   }).join("");
 }
+let openIds=new Set();
 function renderItem(it){{
     const b=bestOf(it);
     const pill=b?`<span class="pill best">الأرخص: ${esc(BY[b.id].n)} · ${fmt(b.p)} ر.س</span>`:`<span class="pill none">ما فيه أسعار</span>`;
@@ -379,7 +380,7 @@ function renderItem(it){{
         <label for="p-${it.id}-${id}">${esc(s.n)}</label>
         <input id="p-${it.id}-${id}" type="number" inputmode="decimal" step="0.01" min="0" placeholder="ر.س" value="${v}" data-item="${it.id}" data-store="${id}">
         <a href="${esc(searchUrl(s,it.name))}" target="_blank" rel="noopener">ابحث</a></div>`}).join("");
-    return `<details class="item" data-id="${it.id}" ${open.has(it.id)?"open":""}>
+    return `<details class="item" data-id="${it.id}" ${openIds.has(it.id)?"open":""}>
       <summary><span class="name">${esc(it.name)}</span><span class="qty">×${it.qty}</span>${pill}</summary>
       <div class="body">
         <div class="prices">${prices}</div>
