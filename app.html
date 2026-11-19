@@ -98,6 +98,11 @@ tfoot td{font-weight:700}
 .cat-h .note{font-weight:400}
 .toggle{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer}
 .toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:10px;font-size:.9rem;z-index:20}
+.group-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:6px;padding-bottom:4px;border-bottom:2px solid var(--accent)}
+.group-h h2{font-size:1.05rem}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.addrow select{flex:0 1 150px;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+textarea.paste{width:100%;min-height:180px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);padding:10px;font-family:var(--f-body);font-size:1rem;line-height:1.7}
 textarea.share{width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);padding:8px;font-family:var(--f-body)}
 @media (prefers-reduced-motion:no-preference){.item,.kpi{transition:border-color .2s}}
 </style>
@@ -123,10 +128,23 @@ textarea.share{width:100%;min-height:120px;border:1px solid var(--line);border-r
       <div class="addrow">
         <input type="text" id="newName" placeholder="مثال: حليب المراعي ٢ لتر" autocomplete="off" aria-label="اسم الغرض">
         <input type="number" id="newQty" value="1" min="1" aria-label="الكمية">
+        <select id="newGroup" aria-label="القسم"></select>
         <button class="btn primary" type="submit">أضف</button>
       </div>
       <div class="chips" id="quick"></div>
     </form>
+    <div class="toolbar">
+      <button class="btn" type="button" id="pasteToggle">الصق قائمة كاملة</button>
+      <button class="btn" type="button" id="loadMonthly">حمّل مقاضي الشهر</button>
+      <button class="btn ghost" type="button" id="newMonth">شهر جديد (امسح الأسعار)</button>
+      <button class="btn ghost danger" type="button" id="clearAll">امسح القائمة</button>
+    </div>
+    <div class="panel stack" id="pastePanel" hidden>
+      <h3>الصق قائمتك</h3>
+      <p class="note">انسخ قائمتك من الواتساب أو الملاحظات والصقها هنا. السطر اللي يبدأ بـ «-» أو «*» يصير غرض، والسطر اللي بدونها (مثل «المنظفات») يصير قسم. تقدر تكتب الكمية في آخر السطر مثل «تونة ×6».</p>
+      <textarea class="paste" id="pasteText" placeholder="مقاضي الشهر&#10;- حليب بودره&#10;- تونة ×6&#10;&#10;المنظفات&#10;- مناديل&#10;- فيري"></textarea>
+      <div class="toolbar"><button class="btn primary" type="button" id="pasteAdd">أضف للقائمة</button><button class="btn ghost" type="button" id="pasteCancel">إلغاء</button></div>
+    </div>
     <div id="sampleBanner" class="banner" hidden>
       <span>هذي قائمة وأسعار تجريبية عشان تشوف الفكرة، مو أسعار حقيقية.</span>
       <button class="btn small" type="button" id="clearSample">امسحها وابدأ قائمتي</button>
@@ -225,9 +243,82 @@ function sampleState(){
     it("بيض ٣٠ حبة",1,{panda:22.95,othaim:21.5,danube:24,carrefour:22.5,amazon:23.5})
   ]};
 }
+const MONTHLY=`مقاضي الشهر
+- حليب بودره
+- حليب مبخر
+- لبن
+- حليب سايل المراعي او نادك
+- قشطة قيمر
+- جبنة كيري
+- بكنج بودر
+- دجاج مبرد كامل
+- دجاج صدور
+- لحم مفروم
+- تونة
+- بيض
+- جبن حلوم
+- طحين بر
+- زيتون علبة
+- زيت زيتون
+- خبز شباتي
+- ماجي
+- ملح
+- سميد ناعم
+- صلصلة
+- مكرونة
+- خليط كيك شوكولاته
+- بطاط عيدان
+
+المنظفات
+- مناديل
+- صابون ملابس
+- فيري
+- جل العملاق
+- كلوركس
+- منظف جف للفرن
+- منظف جف للأقمشة
+- نشا للملابس
+
+محل العطارة
+- قهوة
+- خلطة القصيم
+- كمون مطحون
+- بهارات عثمانية السوادي
+- بهارات إيطالية
+- كاري
+- بهارات مشكلة الغربي
+- سماق`;
+const BULLET=/^([-*•·▪◦–—]|\d+\s*[.)\-])\s*/;
+function parseList(text){
+  const lines=text.split(/\r?\n/).map(l=>l.replace(/[​-‏⁠﻿️]/g,"").trim()).filter(Boolean);
+  const anyBullet=lines.some(l=>BULLET.test(l));
+  const out=[];let group="";
+  for(let line of lines){
+    const isItem=!anyBullet||BULLET.test(line);
+    line=line.replace(BULLET,"").replace(/\p{Extended_Pictographic}/gu,"").replace(/[:：]\s*$/,"").trim();
+    if(!line)continue;
+    if(!isItem){group=line;continue}
+    let qty=1;const m=line.match(/\s*[×xX*]\s*(\d+)$/)||line.match(/\s+(\d+)\s*(حبات|حبة|كرتون|علب|علبة|كيس|أكياس)?$/);
+    if(m&&m[1]){qty=Math.max(1,+m[1]);line=line.slice(0,m.index).trim()||line}
+    out.push({name:line,qty,group});
+  }
+  return out;
+}
+function addParsed(list){
+  if(state.sample){state.items=[];state.sample=false}
+  let added=0;
+  for(const p of list){
+    if(state.items.some(it=>it.name===p.name&&(it.group||"")===p.group))continue;
+    state.items.push({id:uid(),name:p.name,qty:p.qty,group:p.group,prices:{}});added++;
+  }
+  save();renderAll();return added;
+}
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){state=null}
-if(!state||!Array.isArray(state.items)) state=sampleState();
+if(!state||!Array.isArray(state.items)||state.sample){
+  const compare=state&&Array.isArray(state.compare)?state.compare:[...DEFAULT_COMPARE];
+  state={sample:false,compare,items:parseList(MONTHLY).map(p=>({id:uid(),...p,prices:{}}))};
+}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 
 const $=s=>document.querySelector(s);
@@ -269,7 +360,18 @@ function renderItems(){
   const box=$("#items");
   if(!state.items.length){box.innerHTML=`<div class="empty">قائمتك فاضية. اكتب أول غرض فوق أو اختر من الاقتراحات.</div>`;return}
   const open=new Set([...box.querySelectorAll("details[open]")].map(d=>d.dataset.id));
-  box.innerHTML=state.items.map(it=>{
+  const groups=[];const gmap={};
+  for(const it of state.items){const g=it.group||"";if(!gmap[g]){gmap[g]=[];groups.push(g)}gmap[g].push(it)}
+  const sel=$("#newGroup");const cur=sel.value;
+  sel.innerHTML=groups.filter(Boolean).map(g=>`<option>${esc(g)}</option>`).join("")+`<option value="">بدون قسم</option>`;
+  if([...sel.options].some(o=>o.value===cur))sel.value=cur;
+  box.innerHTML=groups.map(g=>{
+    const list=gmap[g];let sum=0,priced=0;
+    for(const it of list){const b=bestOf(it);if(b){sum+=b.p*it.qty;priced++}}
+    return `<div class="group-h"><h2>${esc(g||"أغراض أخرى")}</h2><span class="note">${list.length} غرض${priced?` · أرخص مجموع ${fmt(sum)} ر.س`:""}</span></div>`+list.map(renderItem).join("");
+  }).join("");
+}
+function renderItem(it){{
     const b=bestOf(it);
     const pill=b?`<span class="pill best">الأرخص: ${esc(BY[b.id].n)} · ${fmt(b.p)} ر.س</span>`:`<span class="pill none">ما فيه أسعار</span>`;
     const prices=state.compare.map(id=>{const s=BY[id];const v=it.prices[id]??"";
@@ -286,7 +388,7 @@ function renderItems(){
           <span class="stepper"><button type="button" data-step="1" data-item="${it.id}" aria-label="زيادة">+</button><span>${it.qty}</span><button type="button" data-step="-1" data-item="${it.id}" aria-label="نقص">−</button></span>
           <button class="btn small danger" type="button" data-del="${it.id}">حذف</button>
         </div>
-      </div></details>`}).join("");
+      </div></details>`}
 }
 function renderCompare(){
   const a=analyse(),items=state.items,cmp=state.compare;
@@ -345,11 +447,30 @@ $("#addForm").addEventListener("submit",e=>{e.preventDefault();
   const name=$("#newName").value.trim();if(!name)return;
   const qty=Math.max(1,parseInt($("#newQty").value)||1);
   if(state.sample){state.items=[];state.sample=false}
-  state.items.unshift({id:uid(),name,qty,prices:{}});
+  const group=$("#newGroup").value;
+  const item={id:uid(),name,qty,group,prices:{}};
+  const at=state.items.findIndex(x=>(x.group||"")===group);
+  if(at>=0)state.items.splice(at,0,item);else state.items.push(item);
   $("#newName").value="";$("#newQty").value=1;save();renderAll();
-  const d=document.querySelector(`details[data-id="${state.items[0].id}"]`);if(d)d.open=true;
+  const d=document.querySelector(`details[data-id="${item.id}"]`);if(d){d.open=true;d.scrollIntoView({block:"nearest"})}
   toast("انضاف «"+name+"»");
 });
+$("#pasteToggle").addEventListener("click",()=>{const p=$("#pastePanel");p.hidden=!p.hidden;if(!p.hidden)$("#pasteText").focus()});
+$("#pasteCancel").addEventListener("click",()=>{$("#pastePanel").hidden=true});
+$("#pasteAdd").addEventListener("click",()=>{
+  const list=parseList($("#pasteText").value);
+  if(!list.length){toast("ما لقيت أغراض في النص");return}
+  const n=addParsed(list);$("#pasteText").value="";$("#pastePanel").hidden=true;
+  toast(n?`انضاف ${n} غرض`:"كل الأغراض موجودة من قبل");
+});
+$("#loadMonthly").addEventListener("click",()=>{const n=addParsed(parseList(MONTHLY));toast(n?`انضاف ${n} غرض من مقاضي الشهر`:"مقاضي الشهر موجودة كلها")});
+function twoTap(btn,label,action){
+  if(btn.dataset.armed){delete btn.dataset.armed;btn.textContent=label;action();return}
+  btn.dataset.armed="1";btn.textContent="متأكد؟ اضغط مرة ثانية";
+  setTimeout(()=>{if(btn.dataset.armed){delete btn.dataset.armed;btn.textContent=label}},3000);
+}
+$("#newMonth").addEventListener("click",e=>twoTap(e.currentTarget,"شهر جديد (امسح الأسعار)",()=>{state.items.forEach(it=>it.prices={});save();renderAll();toast("انمسحت الأسعار، القائمة باقية")}));
+$("#clearAll").addEventListener("click",e=>twoTap(e.currentTarget,"امسح القائمة",()=>{state.items=[];state.sample=false;save();renderAll();toast("انمسحت القائمة")}));
 $("#quick").addEventListener("click",e=>{const b=e.target.closest("[data-q]");if(!b)return;$("#newName").value=b.dataset.q;$("#newName").focus()});
 $("#clearSample").addEventListener("click",()=>{state.items=[];state.sample=false;save();renderAll();$("#newName").focus()});
 $("#items").addEventListener("change",e=>{const i=e.target;if(!i.dataset.store)return;
